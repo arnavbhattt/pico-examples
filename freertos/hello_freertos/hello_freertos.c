@@ -35,9 +35,9 @@
 #define LED_DELAY_MS 2000
 
 // Priorities of our threads - higher numbers are higher priority
-#define MAIN_TASK_PRIORITY      ( tskIDLE_PRIORITY + 2UL )
-#define BLINK_TASK_PRIORITY     ( tskIDLE_PRIORITY + 1UL )
-#define WORKER_TASK_PRIORITY    ( tskIDLE_PRIORITY + 4UL )
+#define MAIN_TASK_PRIORITY (tskIDLE_PRIORITY + 2UL)
+#define BLINK_TASK_PRIORITY (tskIDLE_PRIORITY + 1UL)
+#define WORKER_TASK_PRIORITY (tskIDLE_PRIORITY + 4UL)
 
 // Stack sizes of our threads in words (4 bytes)
 #define MAIN_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
@@ -48,9 +48,10 @@
 static async_context_freertos_t async_context_instance;
 
 // Create an async context
-static async_context_t *example_async_context(void) {
+static async_context_t *example_async_context(void)
+{
     async_context_freertos_config_t config = async_context_freertos_default_config();
-    config.task_priority = WORKER_TASK_PRIORITY; // defaults to ASYNC_CONTEXT_DEFAULT_FREERTOS_TASK_PRIORITY
+    config.task_priority = WORKER_TASK_PRIORITY;     // defaults to ASYNC_CONTEXT_DEFAULT_FREERTOS_TASK_PRIORITY
     config.task_stack_size = WORKER_TASK_STACK_SIZE; // defaults to ASYNC_CONTEXT_DEFAULT_FREERTOS_TASK_STACK_SIZE
     if (!async_context_freertos_init(&async_context_instance, &config))
         return NULL;
@@ -59,7 +60,8 @@ static async_context_t *example_async_context(void) {
 
 #if USE_LED
 // Turn led on or off
-static void pico_set_led(bool led_on) {
+static void pico_set_led(bool led_on)
+{
 #if defined PICO_DEFAULT_LED_PIN
     gpio_put(PICO_DEFAULT_LED_PIN, led_on);
 #elif defined(CYW43_WL_GPIO_LED_PIN)
@@ -68,7 +70,8 @@ static void pico_set_led(bool led_on) {
 }
 
 // Initialise led
-static void pico_init_led(void) {
+static void pico_init_led(void)
+{
 #if defined PICO_DEFAULT_LED_PIN
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
@@ -78,14 +81,17 @@ static void pico_init_led(void) {
 #endif
 }
 
-void blink_task(__unused void *params) {
+void blink_task(__unused void *params)
+{
     bool on = false;
     printf("blink_task starts\n");
     pico_init_led();
-    while (true) {
+    while (true)
+    {
 #if configNUMBER_OF_CORES > 1
         static int last_core_id = -1;
-        if (portGET_CORE_ID() != last_core_id) {
+        if (portGET_CORE_ID() != last_core_id)
+        {
             last_core_id = portGET_CORE_ID();
             printf("blink task is on core %d\n", last_core_id);
         }
@@ -107,21 +113,24 @@ void blink_task(__unused void *params) {
 #endif // USE_LED
 
 // async workers run in their own thread when using async_context_freertos_t with priority WORKER_TASK_PRIORITY
-static void do_work(async_context_t *context, async_at_time_worker_t *worker) {
+static void do_work(async_context_t *context, async_at_time_worker_t *worker)
+{
     async_context_add_at_time_worker_in_ms(context, worker, 10000);
     static uint32_t count = 0;
     printf("Hello from worker count=%u\n", count++);
 #if configNUMBER_OF_CORES > 1
-        static int last_core_id = -1;
-        if (portGET_CORE_ID() != last_core_id) {
-            last_core_id = portGET_CORE_ID();
-            printf("worker is on core %d\n", last_core_id);
-        }
+    static int last_core_id = -1;
+    if (portGET_CORE_ID() != last_core_id)
+    {
+        last_core_id = portGET_CORE_ID();
+        printf("worker is on core %d\n", last_core_id);
+    }
 #endif
 }
-async_at_time_worker_t worker_timeout = { .do_work = do_work };
+async_at_time_worker_t worker_timeout = {.do_work = do_work};
 
-void main_task(__unused void *params) {
+void main_task(__unused void *params)
+{
     async_context_t *context = example_async_context();
     // start the worker running
     async_context_add_at_time_worker_in_ms(context, &worker_timeout, 0);
@@ -130,10 +139,12 @@ void main_task(__unused void *params) {
     xTaskCreate(blink_task, "BlinkThread", BLINK_TASK_STACK_SIZE, NULL, BLINK_TASK_PRIORITY, NULL);
 #endif
     int count = 0;
-    while(true) {
+    while (true)
+    {
 #if configNUMBER_OF_CORES > 1
         static int last_core_id = -1;
-        if (portGET_CORE_ID() != last_core_id) {
+        if (portGET_CORE_ID() != last_core_id)
+        {
             last_core_id = portGET_CORE_ID();
             printf("main task is on core %d\n", last_core_id);
         }
@@ -144,7 +155,8 @@ void main_task(__unused void *params) {
     async_context_deinit(context);
 }
 
-void vLaunch( void) {
+void vLaunch(void)
+{
     TaskHandle_t task;
     xTaskCreate(main_task, "MainThread", MAIN_TASK_STACK_SIZE, NULL, MAIN_TASK_PRIORITY, &task);
 
@@ -157,7 +169,7 @@ void vLaunch( void) {
     vTaskStartScheduler();
 }
 
-int main( void )
+int main(void)
 {
     stdio_init_all();
 
@@ -172,10 +184,11 @@ int main( void )
 #if (configNUMBER_OF_CORES > 1)
     printf("Starting %s on both cores:\n", rtos_name);
     vLaunch();
-#elif (RUN_FREE_RTOS_ON_CORE == 1 && configNUMBER_OF_CORES==1)
+#elif (RUN_FREE_RTOS_ON_CORE == 1 && configNUMBER_OF_CORES == 1)
     printf("Starting %s on core 1:\n", rtos_name);
     multicore_launch_core1(vLaunch);
-    while (true);
+    while (true)
+        ;
 #else
     printf("Starting %s on core 0:\n", rtos_name);
     vLaunch();

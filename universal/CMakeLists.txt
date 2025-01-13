@@ -1,3 +1,13 @@
+# Set paths for ARM and RISC-V toolchains
+set(PICO_ARM_TOOLCHAIN_PATH "/usr" CACHE STRING "Path to ARM toolchain")
+set(PICO_RISCV_TOOLCHAIN_PATH "/opt/riscv" CACHE STRING "Path to RISC-V toolchain")
+
+# if (NOT FREERTOS_KERNEL_PATH AND NOT DEFINED ENV{FREERTOS_KERNEL_PATH})
+#     message("Skipping FreeRTOS examples as FREERTOS_KERNEL_PATH not defined")
+#     return()
+# endif()
+# include(FreeRTOS_Kernel_import.cmake)
+
 if ((NOT DEFINED PICO_RISCV_TOOLCHAIN_PATH) OR (NOT DEFINED PICO_ARM_TOOLCHAIN_PATH))
     # Must define PICO_RISCV_TOOLCHAIN_PATH and PICO_ARM_TOOLCHAIN_PATH
     # to ensure both compilers are present
